@@ -5,10 +5,8 @@ on:
   push:
     branches: [main]
     paths:
-      - index.htm
-      - css/**
-      - image/**
-      - .github/scripts/deploy-homepage.sh
+      - site/**
+      - scripts/deploy-homepage.sh
       - .github/workflows/deploy-homepage.yml
   workflow_dispatch:
     inputs:
@@ -44,4 +42,4 @@ jobs:
           HOMEPAGE_SSH_KEY: ${{ secrets.HOMEPAGE_SSH_KEY }}
           HOMEPAGE_KNOWN_HOSTS: ${{ secrets.HOMEPAGE_KNOWN_HOSTS }}
           HOMEPAGE_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
-        run: bash .github/scripts/deploy-homepage.sh
+        run: bash scripts/deploy-homepage.sh

@@ -18,7 +18,7 @@ fail() {
 [[ "$HOMEPAGE_SSH_USER" =~ ^[A-Za-z0-9_][A-Za-z0-9_-]*$ ]] || fail 'Invalid SSH username.'
 [[ "$HOMEPAGE_SSH_PORT" =~ ^[0-9]{1,5}$ ]] || fail 'Invalid SSH port.'
 (( 10#$HOMEPAGE_SSH_PORT >= 1 && 10#$HOMEPAGE_SSH_PORT <= 65535 )) || fail 'SSH port is out of range.'
-[[ "$HOMEPAGE_DIRECTORY" =~ ^/[A-Za-z0-9_./-]+/02_24$ ]] || fail 'The destination must be an absolute path ending in /02_24.'
+[[ "$HOMEPAGE_DIRECTORY" =~ ^/[A-Za-z0-9_./-]+/public_html$ ]] || fail 'The destination must be the absolute public_html directory.'
 case "$HOMEPAGE_DIRECTORY/" in
     *'/../'*|*'/./'*|*'//'*) fail 'The destination must be a plain directory path.' ;;
 esac
@@ -27,10 +27,13 @@ case "${HOMEPAGE_DRY_RUN:-true}" in
     *) fail 'HOMEPAGE_DRY_RUN must be true or false.' ;;
 esac
 
-[[ -f index.htm && ! -L index.htm ]] || fail 'Missing regular index.htm file.'
+homepage_repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+cd -- "$homepage_repo"
+[[ -d site && ! -L site ]] || fail 'Missing regular site directory.'
+[[ -f site/index.html && ! -L site/index.html ]] || fail 'Missing regular site/index.html file.'
 for homepage_assets in css image; do
-    [[ -d "$homepage_assets" && ! -L "$homepage_assets" ]] || fail "Missing regular $homepage_assets directory."
-    [[ -z "$(find "$homepage_assets" -type l -print -quit)" ]] || fail 'Source assets must not contain symbolic links.'
+    [[ -d "site/$homepage_assets" && ! -L "site/$homepage_assets" ]] || fail "Missing regular site/$homepage_assets directory."
+    [[ -z "$(find "site/$homepage_assets" -type l -print -quit)" ]] || fail 'Source assets must not contain symbolic links.'
 done
 
 homepage_ssh_dir=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/homepage-ssh.XXXXXX")
@@ -72,8 +75,8 @@ fi
 # Assets arrive first; HTML is sent only after the asset transfer succeeds.
 # No --delete option is used, so older assets remain available.
 rsync "${homepage_rsync_options[@]}" -e "ssh -F '$homepage_ssh_dir/config'" \
-    -- css image "homepage-site:$HOMEPAGE_DIRECTORY/"
+    -- site/css site/image "homepage-site:$HOMEPAGE_DIRECTORY/"
 rsync "${homepage_rsync_options[@]}" -e "ssh -F '$homepage_ssh_dir/config'" \
-    -- index.htm "homepage-site:$HOMEPAGE_DIRECTORY/"
+    -- site/index.html "homepage-site:$HOMEPAGE_DIRECTORY/"
 
 printf 'Homepage upload finished (dry run: %s).\n' "${HOMEPAGE_DRY_RUN:-true}"

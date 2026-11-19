@@ -10,78 +10,98 @@ Keep all four existing gallery photos. The journey video uses image/abhinav3.jpg
 
 Keep newsletter signup in a closed-by-default dropdown so it does not take up a full section of the homepage.
 
-This repository contains only the homepage:
+## Folder structure
 
 ```text
-index.htm
-css/
-image/
+site/
+  index.html
+  css/
+    style.css
+  image/
+scripts/
+  deploy-homepage.sh
+.github/
+  workflows/
+    deploy-homepage.yml
+README.md
 ```
 
-The hosted root `index.php` loads `02_24/index.htm`. WordPress and the other applications in `public_html` are separate from this repository.
+`site/` contains the public website. `scripts/` contains publishing commands. `.github/workflows/` tells GitHub when to run those commands. Repository and local setup files are kept outside `site/`.
+
+The server serves a static `public_html/index.html` directly. The homepage no longer needs a PHP wrapper or the dated `02_24` folder.
 
 ## Working copy
-
-Create a clean local checkout with:
 
 ```sh
 git clone https://github.com/abhinav4848/abhinavkrcom-02-24.git abhinavkr-homepage
 cd abhinavkr-homepage
 ```
 
-The current baseline was updated with the homepage files from the existing website. The old FTP-transferred `.git` directory was not copied. The existing GitHub history is preserved.
+Use the clean checkout for future edits. The original FTP-transferred Git metadata is not part of this repository's website files. Existing GitHub history is preserved.
+
+## Preview locally
+
+```sh
+python -m http.server --directory site 8000
+```
+
+Open <http://localhost:8000/>. The homepage is plain HTML, CSS, and browser JavaScript, so local preview needs no PHP or build step.
 
 ## Save changes to GitHub
-
-Run these commands from the clean checkout:
 
 ```sh
 git status
 git diff
-git add index.htm css image
+git add site
 git commit -m "Update homepage"
 git push origin main
 ```
 
-When intentionally changing supporting files such as this README or `.gitignore`, stage those named files too. Review the changes before committing. Make future edits in this checkout rather than the old FTP copy.
+When changing the workflow, publishing script, or documentation, stage those named files too. Review changes before committing. Git manages history in the local `.git` directory; that directory is never published as website content.
 
-Git uses the local `.git` directory to manage history. It does not upload that directory as website content when you push commits to GitHub.
+## Automatic publishing
 
-## Website publishing
+The **Publish homepage** GitHub Actions workflow runs when pushes to `main` change `site/`, the publishing script, or the workflow. It uses a temporary GitHub computer to connect to the hosting account over SSH and upload the homepage.
 
-The **Publish homepage** GitHub Actions workflow connects to the Linux hosting account over SSH. Once automatic publishing is enabled, pushes to `main` that change the homepage or its workflow publish the new files.
+| Repository source | Hosting destination |
+| --- | --- |
+| `site/index.html` | `public_html/index.html` |
+| `site/css/` | `public_html/css/` |
+| `site/image/` | `public_html/image/` |
 
-Only `index.htm`, `css/`, and `image/` are transferred into the configured `02_24` directory. Assets transfer first, then HTML. The workflow does not upload `.git`, root routing files, WordPress, or other applications. It does not delete older assets.
+The contents of `site/` are published without adding a `/site/` prefix to the website address. Relative CSS, image, gallery, and visiting-card paths work at the domain root and under the hosting account's temporary URL prefix.
 
-The host-provided temporary address for the new account is:
+The script explicitly transfers only the three paths above, sending assets before HTML. It never copies repository metadata, credentials, scripts, or documentation. It does not delete older assets or neighbouring applications. WordPress and other folders in `public_html` remain outside this repository's deployment scope.
+
+The host-provided temporary address is:
 
 <http://sh00003.bigrock.tempwebhost.net/~sa1792ca/>
 
-Homepage asset paths are relative to the entry page, so they work under this temporary URL prefix and at the eventual domain root. `hosting/index.php` is the small root entry point installed once at `public_html/index.php`; routine deployment only updates the files in `02_24`.
+Publishing does not change DNS. The current domain remains on its existing hosting until a separate migration is arranged. WordPress and other applications need their own migration before switching the whole domain.
 
-Publishing to this new account does not change DNS. The current domain remains on its existing hosting until a separate migration is arranged. Other applications, including WordPress, need their own migration before a whole-domain switch.
+## Repository settings
 
-### Repository settings
-
-In **Settings → Secrets and variables → Actions**, configure:
+Under **Settings → Secrets and variables → Actions**:
 
 | Kind | Name | Purpose |
 | --- | --- | --- |
 | Variable | `HOMEPAGE_SSH_HOST` | Verified hosting IP or hostname |
 | Variable | `HOMEPAGE_SSH_PORT` | Hosting SSH port |
 | Variable | `HOMEPAGE_SSH_USER` | Hosting account username |
-| Variable | `HOMEPAGE_DIRECTORY` | Absolute publishing directory, ending in `/02_24` |
+| Variable | `HOMEPAGE_DIRECTORY` | Absolute document root, ending in `/public_html` |
 | Variable | `HOMEPAGE_AUTO_DEPLOY` | `true` enables publishing on pushes; `false` pauses it |
-| Secret | `HOMEPAGE_SSH_KEY` | The dedicated deployment private key |
-| Secret | `HOMEPAGE_KNOWN_HOSTS` | The pinned SSH host key for this server |
+| Secret | `HOMEPAGE_SSH_KEY` | Dedicated deployment private key |
+| Secret | `HOMEPAGE_KNOWN_HOSTS` | Pinned SSH host key for this server |
 
-The public half of the deployment key is authorized in cPanel. The private key is stored in GitHub Actions Secrets and is never committed. Local setup files are in the ignored `.deploy` directory. The workflow requires the recorded SSH host key to match and does not accept an unexpected replacement key.
+The public deployment key is authorized in cPanel. Its private half is stored in GitHub Actions Secrets and the ignored local `.deploy` folder. Keep an encrypted backup of the private key, public key, and `known_hosts` file outside this computer. Neither the key nor local setup tools belong in `site/` or Git history. The workflow checks the pinned server identity before connecting.
 
-### Preview or publish manually
+## Preview or publish manually
 
 Open **Actions → Publish homepage → Run workflow** on `main`.
 
-- Leave **dry_run** checked to preview file transfers without changing the server.
-- Uncheck **dry_run** to publish the current `main` revision.
+- Leave **dry_run** checked to list proposed transfers without changing the server.
+- Uncheck **dry_run** to publish the current revision.
 
-The destination directory must already exist. Initial setup verifies the destination and previews transfers before enabling automatic publishing. To pause routine publishing, set `HOMEPAGE_AUTO_DEPLOY` to `false`; manual runs remain available.
+The destination must already exist. To pause automatic publishing, set `HOMEPAGE_AUTO_DEPLOY` to `false`; manual runs remain available.
+
+The one-time folder migration keeps the former root PHP wrapper and `02_24` website in a private `homepage-backups` directory under the hosting account's home folder, outside `public_html`. Routine publishing does not move or delete these backups.
