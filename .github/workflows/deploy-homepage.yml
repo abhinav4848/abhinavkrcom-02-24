@@ -7,6 +7,8 @@ on:
     paths:
       - site/**
       - scripts/deploy-homepage.sh
+      - scripts/stamp-site.mjs
+      - scripts/stamp-site.test.mjs
       - .github/workflows/deploy-homepage.yml
   workflow_dispatch:
     inputs:
@@ -33,6 +35,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: Check website update timestamps
+        run: node --test scripts/stamp-site.test.mjs
+      - name: Stamp the website update time
+        run: node scripts/stamp-site.mjs
       - name: Publish homepage files
         env:
           HOMEPAGE_SSH_HOST: ${{ vars.HOMEPAGE_SSH_HOST }}

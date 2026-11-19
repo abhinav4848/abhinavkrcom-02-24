@@ -6,7 +6,9 @@ Source files for the homepage at <https://abhinavkr.com/>.
 
 The homepage follows the Creator direction with readable Manrope sans-serif type, comfortable line spacing, and a persistent light/dark theme toggle. Avoid the crowded, decorative serif typography used in the earlier Editorial and Personal desk concepts.
 
-Keep all four existing gallery photos. The journey video uses site/image/abhinav3.jpg; the junior doctor salary video uses site/image/studio.jpg. Preserve the social accounts, travel channel (@DrAbhinavLifestyle), writing and project links, original Kit signup, and expandable visiting card with its full-size QR image.
+Keep all four existing gallery photos; abhinav2 is labelled Edinburgh. The journey video uses site/image/abhinav3.jpg; the junior doctor salary video uses the supplied site/image/junior-doctor-salary.png thumbnail. Keep @drabhinavkr clearly labelled as the main YouTube channel and @DrAbhinavLifestyle as the second, travel/lifestyle channel.
+
+Use the selected lime accent (#7FFF09) for primary actions while keeping the light/dark palettes and each social network's brand colours and icons. Preserve every social, writing, and project link. Order the coloured dropdowns: visiting card, writing, projects, then email updates. Keep the original QR card and Kit signup.
 
 Keep newsletter signup in a closed-by-default dropdown so it does not take up a full section of the homepage.
 
@@ -20,6 +22,8 @@ site/
   image/
 scripts/
   deploy-homepage.sh
+  stamp-site.mjs
+  stamp-site.test.mjs
 .github/
   workflows/
     deploy-homepage.yml
@@ -78,6 +82,14 @@ The host-provided temporary address is:
 <http://sh00003.bigrock.tempwebhost.net/~sa1792ca/>
 
 Publishing does not change DNS. The current domain remains on its existing hosting until a separate migration is arranged. WordPress and other applications need their own migration before switching the whole domain.
+
+## Automatic update date
+
+Before every publication, GitHub runs scripts/stamp-site.mjs. It writes the latest commit date affecting site/ into the footer's last-updated time element, using UK time (GMT or BST). This works for edits committed directly on GitHub, local pushes, and manual workflow runs.
+
+The date is written into the static HTML before uploading. It does not use PHP, a server process, or the visitor's current date. Documentation-only commits do not change the website update date. A CSS or image update does. The workflow fetches the full Git history so that manual re-publication also keeps the correct date.
+
+Run node --test scripts/stamp-site.test.mjs to check the timestamp behaviour. To preview the generated HTML without changing the source, use node scripts/stamp-site.mjs --output .deploy/stamped-preview.html.
 
 ## Repository settings
 
