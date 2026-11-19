@@ -1,0 +1,21 @@
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local credentials and connection settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.ftpconfig
+.ftp-sync.json
+
+# Local backups and deployment output
+backups/
+*.zip
+*.sql
+.deploy/
