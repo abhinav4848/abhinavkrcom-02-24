@@ -71,7 +71,8 @@ if [[ "${HOMEPAGE_DRY_RUN:-true}" == true ]]; then
     printf 'Previewing homepage uploads; no server files will change.\n'
 fi
 
-# Only these named paths are sent. No repository metadata or root files.
+# Only these named public paths are sent. Repository files and other server
+# folders are outside the upload scope.
 # Assets arrive first; HTML is sent only after the asset transfer succeeds.
 # No --delete option is used, so older assets remain available.
 rsync "${homepage_rsync_options[@]}" -e "ssh -F '$homepage_ssh_dir/config'" \

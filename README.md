@@ -6,7 +6,7 @@ Source files for the homepage at <https://abhinavkr.com/>.
 
 The homepage follows the Creator direction with readable Manrope sans-serif type, comfortable line spacing, and a persistent light/dark theme toggle. Avoid the crowded, decorative serif typography used in the earlier Editorial and Personal desk concepts.
 
-Keep all four existing gallery photos. The journey video uses image/abhinav3.jpg; the junior doctor salary video uses image/studio.jpg. Preserve the social accounts, travel channel (@DrAbhinavLifestyle), writing and project links, original Kit signup, and expandable visiting card with its full-size QR image.
+Keep all four existing gallery photos. The journey video uses site/image/abhinav3.jpg; the junior doctor salary video uses site/image/studio.jpg. Preserve the social accounts, travel channel (@DrAbhinavLifestyle), writing and project links, original Kit signup, and expandable visiting card with its full-size QR image.
 
 Keep newsletter signup in a closed-by-default dropdown so it does not take up a full section of the homepage.
 
@@ -104,4 +104,4 @@ Open **Actions → Publish homepage → Run workflow** on `main`.
 
 The destination must already exist. To pause automatic publishing, set `HOMEPAGE_AUTO_DEPLOY` to `false`; manual runs remain available.
 
-The one-time folder migration keeps the former root PHP wrapper and `02_24` website in a private `homepage-backups` directory under the hosting account's home folder, outside `public_html`. Routine publishing does not move or delete these backups.
+The former root PHP wrapper and `02_24` website are archived in a private `homepage-backups` directory under the hosting account's home folder, outside `public_html`. Routine publishing does not move or delete these backups.
