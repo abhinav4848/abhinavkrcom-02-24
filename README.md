@@ -6,11 +6,13 @@ Source files for the homepage at <https://abhinavkr.com/>.
 
 The homepage follows the Creator direction with readable Manrope sans-serif type, comfortable line spacing, and a persistent light/dark theme toggle. Avoid the crowded, decorative serif typography used in the earlier Editorial and Personal desk concepts.
 
-Keep all four existing gallery photos; abhinav2 is labelled Edinburgh. The journey video uses site/image/abhinav3.jpg; the junior doctor salary video uses the supplied site/image/junior-doctor-salary.png thumbnail. Keep @drabhinavkr clearly labelled as the main YouTube channel and @DrAbhinavLifestyle as the second, travel/lifestyle channel.
+Order the gallery: In Scotland (abhinav2), On camera (abhinav3), Studio, Med school days (med-school-days.jpg). Keep the salary video first with its supplied junior-doctor-salary.png thumbnail and 400k+ views label. The journey video comes second, titled "My Full Journey to Becoming a Doctor in UK as an IMG", with the supplied full-journey-img-doctor.png thumbnail. Keep @drabhinavkr clearly labelled as the main YouTube channel and @DrAbhinavLifestyle as the second, travel/lifestyle channel.
 
 Use the selected lime accent (#7FFF09) for primary actions while keeping the light/dark palettes and each social network's brand colours and icons. Preserve every social, writing, and project link. Order the coloured dropdowns: visiting card, writing, projects, then email updates. Keep the original QR card and Kit signup.
 
 Keep newsletter signup in a closed-by-default dropdown so it does not take up a full section of the homepage.
+
+Keep the bottom no-nonsense About me section linked from the top navigation. It covers medicine in India and the UK, PLAB videos, the salary video's 400k+ views, other creative interests, and Google Street View uploads with a 360 camera. Writing and project links use a coloured glow and shadow on hover and keyboard focus, without an underline.
 
 ## Folder structure
 
