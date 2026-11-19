@@ -45,7 +45,7 @@ The **Publish homepage** GitHub Actions workflow connects to the Linux hosting a
 
 Only `index.htm`, `css/`, and `image/` are transferred into the configured `02_24` directory. Assets transfer first, then HTML. The workflow does not upload `.git`, root routing files, WordPress, or other applications. It does not delete older assets.
 
-The new hosting account can be previewed at:
+The host-provided temporary address for the new account is:
 
 <http://sh00003.bigrock.tempwebhost.net/~sa1792ca/>
 

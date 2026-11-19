@@ -1,5 +1,6 @@
 name: Publish homepage
 
+# Automatic runs are enabled after the initial preview and upload are verified.
 on:
   push:
     branches: [main]
