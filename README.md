@@ -21,6 +21,7 @@ site/
   index.html
   css/
     style.css
+    formkit.css
   image/
 scripts/
   deploy-homepage.sh
@@ -33,6 +34,8 @@ README.md
 ```
 
 `site/` contains the public website. `scripts/` contains publishing commands. `.github/workflows/` tells GitHub when to run those commands. Repository and local setup files are kept outside `site/`.
+
+`site/css/formkit.css` holds the Kit newsletter embed's CSS, keeping the homepage HTML easy to edit. The form markup stays in `site/index.html`; homepage-specific newsletter colours and layout overrides remain in `site/css/style.css`. Load the Kit stylesheet after the main stylesheet to preserve the original cascade.
 
 The server serves a static `public_html/index.html` directly. The homepage no longer needs a PHP wrapper or the dated `02_24` folder.
 
