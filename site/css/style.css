@@ -69,13 +69,14 @@ h1, h2, h3 { font-weight: 800; line-height: 1.22; text-wrap: balance; }
 .video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
 .video-card { display: block; text-decoration: none; }
 .video-cover { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: .85rem; background: var(--soft); }
-.video-cover > img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+.video-cover > img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: transform .25s ease, filter .25s ease; }
 .video-cover .journey-photo, .video-cover .salary-photo { object-fit: contain; object-position: center; }
 .salary-cover::after, .journey-cover::after { display: none; }
 .video-cover::after { content: ""; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, #10141b65); pointer-events: none; }
 .video-play { position: absolute; z-index: 1; bottom: 1rem; right: 1rem; width: 2.7rem; height: 2.7rem; display: grid; place-items: center; border-radius: 50%; background: #f9f8f3; color: #252934; }
 .video-play svg { width: 1.25rem; height: 1.25rem; margin-left: -.1rem; }
 .video-card:hover .video-cover > img { transform: scale(1.025); }
+.video-card:hover .video-cover > img, .video-card:focus-visible .video-cover > img { filter: grayscale(0); }
 .video-card:hover .salary-photo, .video-card:hover .journey-photo { transform: none; }
 .video-category { color: var(--muted); font-size: .75rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; margin-top: 1.15rem; }
 .video-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: 1.15rem; }
