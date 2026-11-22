@@ -6,7 +6,18 @@
 // can hide NSFW results from home page
 // has get url parameter auto generated as you type
 // suggest searches as you type, based on old searches
-include('connect-db.php');
+require __DIR__ . '/connect-db.php';
+require __DIR__ . '/engineTransfer.php';
+
+function render_history_button(array $row): string
+{
+    $term = engine_html($row['searchTerm']);
+    $engine = engine_html($row['engine']);
+    $date = date('d-M-Y h:i:s a', strtotime($row['datetime']));
+    return '<button type="button" class="historyList btn btn-link p-0 text-left" data-term="' . $term
+        . '" data-engine="' . $engine . '"><span class="text-primary">' . $term . '</span>'
+        . ' <small><code>(' . $engine . ')</code> (Date: ' . $date . ')</small></button>';
+}
 
 /** AJAX SCRIPTS */
 
@@ -35,47 +46,31 @@ if (array_key_exists('searchTerm', $_POST)) {
         $result = project_query($link, $query);
         if (project_num_rows($result) > 0) {
             while ($row = project_fetch_array($result)) {
-                //insert the search term into box, focus the box, simulate a keyup() on the box
-                $onclickattribute = "document.getElementById('searchField').value ='".$row['searchTerm']."'; document.getElementById('searchField').focus(); searchField();";
-                echo '<li><label class="historyList" onclick="'.$onclickattribute.'"><span class="text-primary">'.$row['searchTerm'].'</span> <small><code>('.$row['engine'].')</code> (Date: '. date("d-M-Y h:i:s a", strtotime($row['datetime'])).')</small></label></li>';
+                echo '<li>' . render_history_button($row) . '</li>';
             }
         }
     }
     die();
 }
 
-// add new engine
-if ((array_key_exists('sitename', $_POST) and $_POST['sitename']!='' and
-array_key_exists('identifier', $_POST) and $_POST['identifier']!='' and
-array_key_exists('urlprefix', $_POST) and $_POST['urlprefix']!='') or
-(array_key_exists('sitename', $_POST) and $_POST['sitename']!='' and
-array_key_exists('identifier', $_POST) and
-($_POST['identifier']=='pureURL' or
-$_POST['identifier']=='pureURL NSFW'))) {
-    // either all 3 parameters are present
-    // or sitename is present and identifier is one of the two options
-    $query_CheckUnique = "SELECT * FROM `searcher_engines` WHERE identifier='".project_value($link, $_POST['identifier'])."' LIMIT 1";
-    $result_CheckUnique = project_query($link, $query_CheckUnique);
-
-    if (project_num_rows($result_CheckUnique) > 0) {
-        echo 'That engine already exists';
-    } else {
-        $query_insertEngine = "INSERT INTO `searcher_engines` (`site name`, `identifier`, `url-prefix`, `url-suffix`, `baseurl`, `nsfw`)
-        VALUES (
-        '".project_value($link, $_POST['sitename'])."',
-        '".project_value($link, $_POST['identifier'])."',
-        '".project_value($link, $_POST['urlprefix'])."',
-        '".project_value($link, $_POST['urlsuffix'])."',
-        '".project_value($link, $_POST['baseurl'])."',
-        '".project_value($link, $_POST['nsfw'])."');";
-
-        if (project_query($link, $query_insertEngine)) {
-            echo 'engine inserted';
-        } else {
-            echo 'failed to enter into database. Query was: <b>'.$query_insertEngine.'</b>';
-        }
+// Add an engine from the main form or the default engines page.
+if (!isset($_POST['changeEngine']) && (array_key_exists('sitename', $_POST) || array_key_exists('urlprefix', $_POST))) {
+    try {
+        [$added] = import_engine_export($link->pdo(), [[
+            'site name' => $_POST['sitename'] ?? null,
+            'identifier' => $_POST['identifier'] ?? null,
+            'old-identifier' => '',
+            'url-prefix' => $_POST['urlprefix'] ?? '',
+            'url-suffix' => $_POST['urlsuffix'] ?? '',
+            'baseurl' => $_POST['baseurl'] ?? '',
+            'nsfw' => $_POST['nsfw'] ?? 0,
+            'hidden' => 0,
+        ]]);
+        echo $added ? 'engine inserted' : 'That engine already exists';
+    } catch (InvalidArgumentException $error) {
+        echo engine_html($error->getMessage());
     }
-    die();
+    exit;
 }
 
 // delete a history entry
@@ -245,9 +240,9 @@ if (array_key_exists('changeEngine', $_POST)) {
 
         <h1>Smart Search</h1>
         <a href="defaultEngines.php">Install default Engines</a> |
-        <a href="exportEngines.php" onclick="alert('upload the html file to home directory and visit it')">Export all
-            engines</a> |
-        <a href="exportedEngines.html">Visit exported file</a>
+        <a href="exportEngines.php">Export engines</a> |
+        <a href="importEngines.php">Import engines</a>
+        <p id="history-engine-status" role="status" class="text-muted my-1"></p>
 
         <div class="card my-1" style="width: 100%;">
             <div class="card-body">
@@ -263,7 +258,9 @@ if (array_key_exists('changeEngine', $_POST)) {
                                     $identifier=$row_engines['identifier'];
                                     $sitename = $row_engines['site name'];
                                     $baseurl = $row_engines['baseurl'];
-                                    echo "<option value='".$identifier."' data-url='".$baseurl."'>".$sitename." (".$identifier.")</option>";
+                                    echo '<option value="' . engine_html($identifier) . '" data-url="'
+                                        . engine_html($baseurl ?? '') . '">' . engine_html($sitename)
+                                        . ' (' . engine_html($identifier) . ')</option>';
                                 }
                             ?>
                         </select>
@@ -338,8 +335,6 @@ if (array_key_exists('changeEngine', $_POST)) {
             </div><!-- /.card-body -->
         </div><!-- /.card -->
 
-        <pre>to-do:
-- Change the engine as well when clicking on link</pre>
         <!-- - <s>Store a search url in pure form into the history, without searching for it in an engine</s>
         - <s>Export and import engines</s>
         - <s>Delete Engine</s>
@@ -376,17 +371,7 @@ if (array_key_exists('changeEngine', $_POST)) {
                         $query.=" ORDER BY searcher_searches.id DESC LIMIT 100";
                         $result = project_query($link, $query);
                         while ($row = project_fetch_assoc($result)) {
-                            // echo '<pre>';
-                            // echo $query.'<br />';
-                            // print_r($row);
-                            // echo '</pre>';
-                            $onclickattribute = "document.getElementById('searchField').value ='".$row['searchTerm']."'; document.getElementById('searchField').focus(); searchField();";
-                            
-                            echo '<li>
-                            <label class="historyList" onclick="'.$onclickattribute.'">
-                            <span class="text-primary">'.$row['searchTerm'].'</span>
-                            <small> <code>('.$row['engine'].')</code> (Date: '. date("d-M-Y h:i:s a", strtotime($row['datetime'])).')</small>
-                            </label> 
+                            echo '<li>' . render_history_button($row) . '
                             <a href="#" class="delete_history" data-id="'.$row['searchID'].'">
                             <i class="far fa-trash-alt"></i>
                             </a>
@@ -419,8 +404,24 @@ if (array_key_exists('changeEngine', $_POST)) {
         var url = new URL(url_string);
         var c = url.searchParams.get("search");
         document.getElementById('searchField').value = c;
+        const engine = url.searchParams.get('engine');
+        if (engine && Array.from(document.getElementById('engine').options).some(option => option.value === engine)) {
+            $('#engine').val(engine).trigger('change');
+        }
         searchField();
     };
+
+    $(document).on('click', '.historyList', function () {
+        const picker = document.getElementById('engine');
+        const present = Array.from(picker.options).some(option => option.value === this.dataset.engine);
+        $('#engine').val(present ? this.dataset.engine : null).trigger('change');
+        document.getElementById('history-engine-status').textContent = present
+            ? '' : 'That engine is unavailable. Choose another engine to run this search.';
+        const search = document.getElementById('searchField');
+        search.value = this.dataset.term;
+        search.focus();
+        searchField();
+    });
 
     // Searches with instant database results
     // if any key is entered, fire searchField()
@@ -435,7 +436,9 @@ if (array_key_exists('changeEngine', $_POST)) {
         if (document.title != searchTerm && searchTerm != '') {
             var engine = $("#engine").val();
             document.title = 'SearchStuff: (' + engine + ')  ' + searchTerm;
-            window.history.replaceState('', '', window.location.pathname + '?search=' + searchTerm);
+            const params = new URLSearchParams({search: searchTerm});
+            if (engine) params.set('engine', engine);
+            history.replaceState(null, '', window.location.pathname + '?' + params);
         } else {
             document.title = 'SearchStuff!';
             window.history.pushState('', '', window.location.pathname);
@@ -517,7 +520,7 @@ if (array_key_exists('changeEngine', $_POST)) {
         var searchTerm = $("#searchField").val();
         var engine = $("#engine").val();
 
-        if (searchTerm != '') {
+        if (searchTerm != '' && engine) {
             $.ajax({
                 type: "POST",
                 url: "searchdb.php",
@@ -532,7 +535,7 @@ if (array_key_exists('changeEngine', $_POST)) {
             });
         } else {
             document.getElementById('error').style.display = 'block';
-            $("#error").html('Please Enter a Term');
+            $("#error").text(searchTerm === '' ? 'Please enter a search term.' : 'Please choose a search engine.');
             window.setTimeout(() => {
                     document.getElementById('error').style.display = 'none';
                 },
@@ -737,10 +740,10 @@ if (array_key_exists('changeEngine', $_POST)) {
             $prefix = $row_engines['url-prefix'];
             $suffix = $row_engines['url-suffix'];
 
-            echo 'if (engine == "'.$identifier.'"){
-                open("'.$prefix.'"+search+"'.$suffix.'")
-            }
-            ';
+            $jsonFlags = JSON_HEX_TAG | JSON_THROW_ON_ERROR;
+            echo 'if (engine === ' . json_encode($identifier, $jsonFlags) . ') {'
+                . 'open(' . json_encode($prefix, $jsonFlags) . ' + search + '
+                . json_encode($suffix, $jsonFlags) . '); }';
         }
         
         echo '}';

@@ -18,6 +18,7 @@ Desktop.ini
 backups/
 *.zip
 *.sql
+!/schemas/*.sql
 *.sql.gz
 *.sqlite
 *.sqlite-*

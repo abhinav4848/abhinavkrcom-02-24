@@ -1,0 +1,42 @@
+name: Publish personal projects
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/**
+      - schemas/**
+      - scripts/init-project-databases.py
+      - scripts/deploy-projects.sh
+      - .github/workflows/deploy-projects.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-preview
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main' && vars.HOMEPAGE_AUTO_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify fresh installation and PHP syntax
+        run: |
+          python3 scripts/init-project-databases.py --data-dir "$RUNNER_TEMP/project-install-check"
+          find apps -name '*.php' -type f -print0 | xargs -0 -n 1 php -l > "$RUNNER_TEMP/project-php-lint.log"
+      - name: Update the staging apps
+        env:
+          HOMEPAGE_SSH_HOST: ${{ vars.HOMEPAGE_SSH_HOST }}
+          HOMEPAGE_SSH_PORT: ${{ vars.HOMEPAGE_SSH_PORT }}
+          HOMEPAGE_SSH_USER: ${{ vars.HOMEPAGE_SSH_USER }}
+          HOMEPAGE_DIRECTORY: ${{ vars.HOMEPAGE_DIRECTORY }}
+          HOMEPAGE_SSH_KEY: ${{ secrets.HOMEPAGE_SSH_KEY }}
+          HOMEPAGE_KNOWN_HOSTS: ${{ secrets.HOMEPAGE_KNOWN_HOSTS }}
+        run: bash scripts/deploy-projects.sh

@@ -1,6 +1,16 @@
 # Legacy PHP projects
 
-These copies use PHP 8.4 with PDO SQLite. Preview them locally with the included router. The homepage workflow publishes only `site/`.
+These copies use PHP 8.4 with PDO SQLite. Smart Search's importer also uses PHP's DOM extension. Preview the apps locally with the included router. Project previews and the homepage publish through separate GitHub Actions workflows.
+
+## Fresh installation
+
+From a new checkout, run:
+
+```sh
+python scripts/init-project-databases.py
+```
+
+The script creates all ten empty SQLite databases from the checked-in `schemas/` files and adds missing local `.env` settings. Run it again if needed. Existing records and settings are retained. To use a different data folder, pass `--data-dir /path/to/private-data` and set `LEGACY_PROJECT_DATA` to that directory for PHP.
 
 From the repository in PowerShell, use the downloaded local PHP runtime if present:
 
@@ -32,6 +42,14 @@ EDFED's optional administrator override uses `ADMIN_OVERRIDE` in its private `.e
 python scripts/import-legacy-databases.py private-data/imports/spsdafxt_users.sql private-data/restored
 ```
 
-The importer compares each converted row with the source and runs an SQLite integrity check. It preserves table and column names, primary IDs, unique indexes and the next auto-increment values. The diary's two duplicate MySQL full-text indexes are omitted because its code looks up individual records. SQLite's built-in case-insensitive comparisons differ from MySQL's for some accented characters.
+The SQL converter compares each converted row with the source and runs an SQLite integrity check. It preserves table and column names, primary IDs, unique indexes and the next auto-increment values. The diary's two duplicate MySQL full-text indexes are omitted because its code looks up individual records. SQLite's built-in case-insensitive comparisons differ from MySQL's for some accented characters.
 
 Import into a new directory, then point the appropriate configuration at the resulting file. To back up a database while it is open, use the SQLite backup API or the SQLite command-line shell's `.backup` command.
+
+## Staging deployment
+
+The **Publish personal projects** workflow updates the existing password-protected `public_html/project-preview/` folder. It runs the initializer against `project-preview-data/` beside the web root. The workflow uploads committed app files and schema definitions. Existing SQLite files, `.env` settings, server access settings and attachments stay in place. The same hosting settings and deployment key used for the homepage also serve this workflow.
+
+On a new host, set up the protected preview folder first and set Apache's `LEGACY_PROJECT_DATA` environment variable to the absolute path of your private `project-preview-data` directory. Then run the workflow. To move existing records or attachments to a new host, restore them separately from private backups.
+
+In Smart Search, use **Export engines** to download the engine settings and **Import engines** to restore them. The import accepts older exports too and skips matching engine identifiers.
