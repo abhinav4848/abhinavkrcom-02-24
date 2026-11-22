@@ -4,6 +4,7 @@ $error="";
 
 if ($_SESSION['permission'] == 'admin' or $_SESSION['permission'] == 'supervisor') {
     include('connect-db.php');
+    $_SESSION['god'] ??= 0;
     $query = "SELECT * FROM `cutabove_council` WHERE council_id = ".$_SESSION['id']." LIMIT 1";
     $result = project_query($link, $query);
     $row = project_fetch_array($result);
@@ -74,9 +75,9 @@ if (array_key_exists("id", $_POST)) {
     }
     die();
 }
+$godModePassword = $_SESSION['permission'] == 'admin' ? project_config('edfed', 'ADMIN_OVERRIDE') : '';
 if (array_key_exists("password", $_POST) and $_SESSION['permission'] == 'admin') {
-    if (($override = project_config('edfed', 'ADMIN_OVERRIDE')) !== ''
-                        && hash_equals($override, (string) $_POST['password'])) {
+    if ($godModePassword !== '' && hash_equals($godModePassword, (string) $_POST['password'])) {
         $_SESSION['god'] = 1;
         echo "God Mode: On";
     } else {
@@ -169,26 +170,18 @@ if (array_key_exists("password", $_POST) and $_SESSION['permission'] == 'admin')
                         </tr>
                         <tr>
                             <td>
-                                <div class="btn-group-toggle" data-toggle="buttons">
-
-                                    <?php
-                                echo '<label id="god_label" class="btn btn-outline-danger';
-                                if ($_SESSION['god'] == 1) {
-                                    echo ' active';
-                                }
-                                echo '">';
-                                echo '<input type="checkbox" id="god" autocomplete="off"><span id="god_mode">';
-                                
-                                if ($_SESSION['god'] == 1) {
-                                    echo 'God Mode: On';
-                                } else {
-                                    echo 'God Mode: Off';
-                                }
-
-                                echo '</span></label>';
-                                ?>
-
-                                </div>
+                                <?php $godModeOn = $_SESSION['god'] == 1; ?>
+                                <button type="button" id="god" class="btn btn-outline-danger<?= $godModeOn ? ' active' : '' ?>"
+                                    aria-pressed="<?= $godModeOn ? 'true' : 'false' ?>" aria-describedby="god-mode-help">
+                                    God Mode: <?= $godModeOn ? 'On' : 'Off' ?>
+                                </button>
+                                <p id="god-mode-help" class="small mt-2 mb-0">
+                                    <?php if ($godModePassword === '') { ?>
+                                        Ask the site owner to set a God Mode password using <code>ADMIN_OVERRIDE</code> in EDFED’s private <code>.env</code> file first.
+                                    <?php } ?>
+                                    Click <strong>God Mode: Off</strong> and enter the God Mode password to turn it on.
+                                </p>
+                                <p id="god-mode-status" class="small text-danger mb-0" role="status"></p>
                             </td>
                         </tr>
                         <tr>
@@ -284,42 +277,32 @@ if (array_key_exists("password", $_POST) and $_SESSION['permission'] == 'admin')
         })
     }
 
-    /* when the god mode button is clicked, it prompts user for a password which is sent via ajax
-    /* if the passwords was correct, ajax returns God Mode: On, which wors great
-    /* if wrong password, the returned value is God Mode: Off, which if found drops the active class on the label
-    /* if the god mode was unclicked, it sends a fake password which disables god mode
-    /* as it was an unclick action, active class will have already been removed on its own so no fret 
-    */
-    $(document).ready(function() {
-        $('#god').change(function() {
-            if (this.checked) {
-                var password = prompt("Please enter your password:", "");
-                $.ajax({
-                    type: "POST",
-                    url: "council-dashboard.php",
-                    data: {
-                        password: password
-                    },
-                    success: function(result) {
-                        $("#god_mode").html(result);
-                        if (result == 'God Mode: Off') {
-                            $("#god_label").removeClass("active");
-                        }
-                    }
-                })
-            } else {
-                $.ajax({
-                    type: "POST",
-                    url: "council-dashboard.php",
-                    data: {
-                        password: 'wrongpass'
-                    },
-                    success: function(result) {
-                        $("#god_mode").html(result);
-                    }
-                })
-            }
-        });
+    $('#god').on('click', function() {
+        var button = $(this);
+        var status = $('#god-mode-status').text('');
+        var turningOn = button.attr('aria-pressed') === 'false';
+        var password = turningOn ? prompt('Enter the God Mode password:') : '';
+        if (password === null) {
+            return;
+        }
+
+        button.prop('disabled', true);
+        $.post('council-dashboard.php', {password: password}, null, 'text')
+            .done(function(result) {
+                var isOn = result === 'God Mode: On';
+                button.attr('aria-pressed', String(isOn))
+                    .toggleClass('active', isOn)
+                    .text(isOn ? 'God Mode: On' : 'God Mode: Off');
+                if (turningOn && !isOn) {
+                    status.text('God Mode is still off. Follow the instructions above and try again.');
+                }
+            })
+            .fail(function() {
+                status.text('Could not update God Mode. Refresh the dashboard and try again.');
+            })
+            .always(function() {
+                button.prop('disabled', false);
+            });
     });
     </script>
 </body>
