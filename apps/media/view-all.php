@@ -57,7 +57,8 @@ if ($currentpage < 1) {
 $offset = ($currentpage - 1) * $rowsperpage;
 
 // get the info from the db
-$query = "SELECT * FROM `media_entries` WHERE ".$whereclause." ORDER BY id LIMIT $offset, $rowsperpage";
+$sort = $_GET['type'] === 'vids' ? 'DESC' : 'ASC';
+$query = "SELECT * FROM `media_entries` WHERE ".$whereclause." ORDER BY id $sort LIMIT $offset, $rowsperpage";
 $result = project_query($link, $query);
 
 ?>
@@ -127,7 +128,7 @@ $result = project_query($link, $query);
         } // end for
 
         // if not on last page, show forward and last page links
-        if ($currentpage != $totalpages) {
+        if ($currentpage < $totalpages) {
             // get next page
             $nextpage = $currentpage + 1;
             // echo forward link for next page
@@ -152,10 +153,10 @@ $result = project_query($link, $query);
                     echo '<a href="view.php?id='.$row['id'].'"><img src="storage/files/'.$row['filename_final'].'" class="card-img-top"></a>';
                 }
                 echo '<div class="card-body">
-                <h5 class="card-title">'.ucfirst($row['title']).'</h5>';
+                <h5 class="card-title">'.htmlspecialchars(ucfirst($row['title']), ENT_QUOTES, 'UTF-8').'</h5>';
 
                 if ($_GET['type']=='vids') {
-                    echo '<p class="card-text">'.$row['description'].'</p>
+                    echo '<p class="card-text">'.htmlspecialchars($row['description'], ENT_QUOTES, 'UTF-8').'</p>
                     <a class="btn btn-primary" href="view.php?id='.$row['id'].'">VIEW</a>';
                 }
                 

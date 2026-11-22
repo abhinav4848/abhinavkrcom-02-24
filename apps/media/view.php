@@ -66,10 +66,11 @@ if ($row['id']=='') {
                     if ($row['filename_ext']=='jpg' or $row['filename_ext']=='jpeg' or $row['filename_ext']=='png' or $row['filename_ext']=='gif') {
                         echo '<img src="storage/files/'.$row['filename_final'].'" width="640">';
                     }
-                    if ($row['filename_ext']=='webm' or $row['filename_ext']=='mp4') {
+                    $extension = strtolower($row['filename_ext']);
+                    if ($extension === 'webm' || $extension === 'mp4') {
                         echo '<div class="embed-responsive embed-responsive-16by9">
                         <video class="embed-responsive-item" controls>
-                        <source src="storage/files/'.$row['filename_final'].'" type="video/mp4">
+                        <source src="storage/files/'.rawurlencode($row['filename_final']).'" type="video/'.$extension.'">
                         Your browser does not support the video tag.
                         </video>
                         </div>';

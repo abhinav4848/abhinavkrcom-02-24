@@ -1,58 +1,55 @@
 <?php
 session_start();
-$error="";
-include('includes/connect-db.php');
+require_once __DIR__ . '/includes/multi-upload.php';
 
-//allowed file types
-$arr_file_types = ['image/png', 'image/gif', 'image/jpg', 'image/jpeg', 'video/webm', 'video/mp4'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pending = pending_media_uploads();
+    $_SESSION['files'] = array_keys($pending);
+    $_SESSION['filename_original_name'] = array_values($pending);
 
-if (array_key_exists("submit", $_POST) and $_POST["submit"]==='submit') {
-    $_SESSION['files']=array();
-    $_SESSION['filename_original_name']=array();
-    $_SESSION['filename_ext']=array();
-    $_SESSION['original_filename_without_ext']=array();
-    $_SESSION['error']=array();
-
-    $total = count($_FILES['upload']['name']);
-    
-    $substitute_params = array('#' => '_', '~' => '_', '&' => '_');
-    
-    // Loop through each file
-    for ($i=0 ; $i < $total ; $i++) {
-        // create the final name the file will have on the server hard disk
-        $filename_final_to_save =  strtr(time().'-'.$_FILES['upload']['name'][$i], $substitute_params);
-
-        // array pushing
-        $_SESSION['files'][] = $filename_final_to_save;
-        $_SESSION['filename_original_name'][] = $_FILES['upload']['name'][$i];
-        $_SESSION['filename_ext'][] = pathinfo($filename_final_to_save, PATHINFO_EXTENSION);
-        $_SESSION['original_filename_without_ext'][] = pathinfo($_FILES['upload']['name'][$i])['filename'];
-
-        if (!(in_array($_FILES['upload']['type'][$i], $arr_file_types))) {
-            $_SESSION['error'][$i]='<b>Valid File Types:</b> '.implode(", ", $arr_file_types);
-        } else {
-            //Get the temp file path
-            $tmpFilePath = $_FILES['upload']['tmp_name'][$i];
-            
-            //Make sure we have a file path
-            if ($tmpFilePath != "") {
-                //Setup our new file path
-                $path= './storage/tmpfiles/';
-                if (!file_exists($path)) {
-                    mkdir($path, 0777, true);
-                }
-
-                //Upload the file into the temp dir
-                if (move_uploaded_file($tmpFilePath, $path.$filename_final_to_save)) {
-                    echo 'Success in uploading: '.$filename_final_to_save.'<br />';
-                } else {
-                    $_SESSION['error']='Couldn\t Upload';
-                }
-            }
+    $uploadCount = 0;
+    $uploadErrors = [];
+    $uploads = $_FILES['upload'] ?? [];
+    foreach ($uploads['name'] ?? [] as $index => $name) {
+        $uploadError = $uploads['error'][$index];
+        if ($uploadError === UPLOAD_ERR_NO_FILE) {
+            continue;
         }
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $uploadErrors[] = "$name could not be uploaded. Check the file size and try again.";
+            continue;
+        }
+
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if (!in_array($uploads['type'][$index], MEDIA_UPLOAD_TYPES[$extension] ?? [], true)) {
+            $uploadErrors[] = "$name is unsupported. Choose an MP4, WebM, JPEG, PNG, or GIF file.";
+            continue;
+        }
+
+        $filename = time() . '-' . bin2hex(random_bytes(6)) . '.' . $extension;
+        if (!is_dir(MEDIA_PENDING_DIRECTORY)) {
+            mkdir(MEDIA_PENDING_DIRECTORY, 0755, true);
+        }
+        if (!move_uploaded_file($uploads['tmp_name'][$index], MEDIA_PENDING_DIRECTORY . $filename)) {
+            $uploadErrors[] = "$name could not be uploaded. Try again.";
+            continue;
+        }
+        $_SESSION['files'][] = $filename;
+        $_SESSION['filename_original_name'][] = $name;
+        $uploadCount++;
     }
-    header('Location: edit_multi.php');
+
+    if ($uploadCount === 0 && $uploadErrors === []) {
+        $uploadErrors[] = 'No files were received. Select files and try again. If the batch is large, upload fewer files at a time.';
+    }
+    $_SESSION['media_upload_notice'] = [$uploadCount, $uploadErrors];
+    header('Location: multifile_uploader.php', true, 303);
+    exit;
 }
+
+[$uploadCount, $uploadErrors] = $_SESSION['media_upload_notice'] ?? [0, []];
+unset($_SESSION['media_upload_notice']);
+$pendingCount = count(pending_media_uploads());
 ?>
 <!doctype html>
 <html lang="en">
@@ -74,10 +71,34 @@ if (array_key_exists("submit", $_POST) and $_POST["submit"]==='submit') {
 
 <body>
     <?php include('includes/navbar.php');?>
-    <div class="container">
+    <div class="container py-4">
+        <h1 class="h3 mb-3">Upload multiple files</h1>
+        <?php if ($uploadCount > 0) { ?>
+        <div class="alert alert-success" role="status">
+            <p class="font-weight-bold mb-1"><?= $uploadCount ?> <?= $uploadCount === 1 ? 'file' : 'files' ?> uploaded successfully.</p>
+            <p class="mb-0">Review and save the files to add them to your library.</p>
+        </div>
+        <?php } ?>
+        <?php if ($uploadErrors !== []) { ?>
+        <div class="alert alert-warning" role="alert">
+            <p class="font-weight-bold mb-1">Upload issues</p>
+            <ul class="mb-0 pl-4">
+                <?php foreach ($uploadErrors as $message) { ?>
+                <li><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></li>
+                <?php } ?>
+            </ul>
+        </div>
+        <?php } ?>
+        <?php if ($pendingCount > 0) { ?>
+        <a class="btn btn-success mb-4" href="edit_multi.php">Review and save <?= $pendingCount ?> <?= $pendingCount === 1 ? 'file' : 'files' ?></a>
+        <?php } ?>
         <form method="post" enctype="multipart/form-data">
-            <input type="file" name="upload[]" multiple>
-            <button type="submit" value="submit" name="submit">Submit</button>
+            <div class="form-group">
+                <label for="upload-files">Choose videos or images</label>
+                <input type="file" class="form-control-file" id="upload-files" name="upload[]"
+                    accept=".mp4,.webm,.jpg,.jpeg,.png,.gif" multiple required>
+            </div>
+            <button class="btn btn-primary" type="submit">Upload files</button>
         </form>
     </div>
 
