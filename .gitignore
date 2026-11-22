@@ -18,4 +18,15 @@ Desktop.ini
 backups/
 *.zip
 *.sql
+*.sql.gz
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+/private-data/
+/apps/**/files/
+/apps/**/storage/
+__pycache__/
 .deploy/
