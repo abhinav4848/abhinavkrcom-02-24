@@ -30,7 +30,7 @@ if ($file === false || !str_starts_with($file, $root . DIRECTORY_SEPARATOR)) {
 }
 if (array_intersect($parts, ['files', 'storage'])) {
     $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (!is_file($file) || !in_array($extension, ['jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp', 'pdf', 'mp4', 'txt', 'doc', 'docx'], true)) {
+    if (!is_file($file) || !in_array($extension, ['jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp', 'pdf', 'mp4', 'webm', 'txt', 'doc', 'docx'], true)) {
         http_response_code(404);
         exit;
     }
