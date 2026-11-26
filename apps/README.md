@@ -32,19 +32,13 @@ Keep these previews on loopback. The original projects include old authenticatio
 
 Copy the project's `.env.example` to `private-data/config/<database-name>/.env` if setting up another checkout. Set `DB_DATABASE` to an absolute path or a path relative to that `.env` file. On a server, use a private directory outside its document root and set the PHP process environment variable `LEGACY_PROJECT_DATA` to that directory. Both patient versions use `config/patients/.env`. The learning pages and names example share `config/learning/.env`.
 
-`private-data/imports/` holds the unchanged SQL export. `private-data/databases/` holds ten one-file SQLite databases. Both locations and the live configuration are ignored by Git. Lexicon and Media attachments use the applications' existing ignored `files/` and `storage/` paths. Back up attachments separately from their databases. Saturnalia has a database and sample configuration only. Its PHP source was absent from the reviewed folders.
+`private-data/databases/` holds ten one-file SQLite databases. The databases and live configuration are ignored by Git. Lexicon and Media attachments use the applications' existing ignored `files/` and `storage/` paths. Back up attachments separately from their databases. Saturnalia has a database and sample configuration only. Its PHP source was absent from the reviewed folders.
 
-EDFED's optional administrator override uses `ADMIN_OVERRIDE` in its private `.env` and defaults to disabled. Diary and Twitter keep support for their old password hashes. New signups use PHP's password hashing API. The SQL export and existing password fields are kept as private migration data.
+EDFED's optional administrator override uses `ADMIN_OVERRIDE` in its private `.env` and defaults to disabled. Diary and Twitter keep support for their old password hashes. New signups use PHP's password hashing API.
 
-## Rebuild from the SQL export
+## Database backups
 
-```sh
-python scripts/import-legacy-databases.py private-data/imports/spsdafxt_users.sql private-data/restored
-```
-
-The SQL converter compares each converted row with the source and runs an SQLite integrity check. It preserves table and column names, primary IDs, unique indexes and the next auto-increment values. The diary's two duplicate MySQL full-text indexes are omitted because its code looks up individual records. SQLite's built-in case-insensitive comparisons differ from MySQL's for some accented characters.
-
-Import into a new directory, then point the appropriate configuration at the resulting file. To back up a database while it is open, use the SQLite backup API or the SQLite command-line shell's `.backup` command.
+To back up a database while it is open, use the SQLite backup API or the SQLite command-line shell's `.backup` command. Restore a backup into a new directory, then point the appropriate configuration at the restored file. Restore uploaded attachments alongside their database records.
 
 ## Staging deployment
 
