@@ -1,6 +1,6 @@
 # Legacy PHP projects
 
-These copies use PHP 8.4 with PDO SQLite. Smart Search's importer also uses PHP's DOM extension. Preview the apps locally with the included router. Project previews and the homepage publish through separate GitHub Actions workflows.
+These copies use PHP 8.4 with PDO SQLite. Smart Search's importer also uses PHP's DOM extension. Preview the apps locally with the included router. Projects and the homepage publish through separate GitHub Actions workflows.
 
 ## Fresh installation
 
@@ -42,8 +42,8 @@ To back up a database while it is open, use the SQLite backup API or the SQLite 
 
 ## Staging deployment
 
-The **Publish personal projects** workflow updates the existing password-protected `public_html/project-preview/` folder. It runs the initializer against `project-preview-data/` beside the web root. The workflow uploads committed app files and schema definitions. Existing SQLite files, `.env` settings, server access settings and attachments stay in place. The same hosting settings and deployment key used for the homepage also serve this workflow.
+The **Publish personal projects** workflow updates the existing password-protected `public_html/projects/` folder. It runs the initializer against `projects-data/` beside the web root. The workflow uploads committed app files and schema definitions. Existing SQLite files, `.env` settings, server access settings and attachments stay in place. The same hosting settings and deployment key used for the homepage also serve this workflow.
 
-On a new host, set up the protected preview folder first and set Apache's `LEGACY_PROJECT_DATA` environment variable to the absolute path of your private `project-preview-data` directory. Then run the workflow. To move existing records or attachments to a new host, restore them separately from private backups.
+On a new host, set up the protected projects folder first and set Apache's `LEGACY_PROJECT_DATA` environment variable to the absolute path of your private `projects-data` directory. Then run the workflow. To move existing records or attachments to a new host, restore them separately from private backups.
 
 In Smart Search, use **Export engines** to download the engine settings and **Import engines** to restore them. The import accepts older exports too and skips matching engine identifiers.

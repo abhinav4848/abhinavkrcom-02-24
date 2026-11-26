@@ -17,10 +17,10 @@ printf '%s\n' "$HOMEPAGE_KNOWN_HOSTS" | tr -d '\r' > "$connection_files/known_ho
 read -r -d '' deploy_remote <<'REMOTE' || true
 set -eu
 document_root=$1
-preview="$document_root/project-preview"
-data_dir="${document_root%/public_html}/project-preview-data"
+projects="$document_root/projects"
+data_dir="${document_root%/public_html}/projects-data"
 test "$(realpath "$document_root")" = "$document_root"
-test -d "$preview" && test ! -L "$preview" && test -f "$preview/.htaccess"
+test -d "$projects" && test ! -L "$projects" && test -f "$projects/.htaccess"
 test ! -L "$data_dir"
 
 umask 077
@@ -29,13 +29,13 @@ trap 'rm -r -- "$staging"' EXIT
 tar --extract --file=- --no-same-owner --no-same-permissions -C "$staging"
 
 python3 "$staging/scripts/init-project-databases.py" --data-dir "$data_dir"
-mkdir -p "$preview/lexicon/files" "$preview/media/storage/files" "$preview/media/storage/tmpfiles" \
-         "$preview/patients/files" "$preview/patients-legacy/files"
+mkdir -p "$projects/lexicon/files" "$projects/media/storage/files" "$projects/media/storage/tmpfiles" \
+         "$projects/patients/files" "$projects/patients-legacy/files"
 
 rsync --recursive --checksum --delay-updates --itemize-changes \
     --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
     --exclude='.*' --exclude='README.md' --exclude='files/' --exclude='storage/' \
-    "$staging/apps/" "$preview/"
+    "$staging/apps/" "$projects/"
 REMOTE
 
 remote_command=$(printf 'bash -c %q -- %q' "$deploy_remote" "$HOMEPAGE_DIRECTORY")

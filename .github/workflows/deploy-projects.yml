@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: project-preview
+  group: projects
   cancel-in-progress: false
 
 jobs:
